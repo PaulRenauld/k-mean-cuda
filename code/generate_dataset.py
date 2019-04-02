@@ -32,7 +32,7 @@ if __name__ == '__main__':
                         help="specify the number of data points")
     parser.add_argument("-v", "--variance", type=int, default=20,
                         help="specify the variance around the cluster centers")
-    parser.add_argument("-r", "--randomness", type=int, default=20,
+    parser.add_argument("-r", "--randomness", type=int, default=20, choices=range(0, 101), metavar="[0-100]",
                         help="specify the percentage of points that are not in a cluster")
 
     args = parser.parse_args()
@@ -47,11 +47,6 @@ if __name__ == '__main__':
         x = random.random() * args.width
         y = random.random() * args.height
         data_points.append((x, y))
-
-    print(sample_per_cluster)
-    print(len(data_points))
-    print(data_points)
-
     xs = [x for (x, _) in data_points]
     ys = [y for (_, y) in data_points]
 
