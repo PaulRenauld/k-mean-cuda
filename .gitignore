@@ -410,3 +410,5 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/c,c++,cuda,linux,macos,clion,python,windows,intellij
+
+code/.idea
