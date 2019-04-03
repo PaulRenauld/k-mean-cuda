@@ -47,6 +47,15 @@ if __name__ == '__main__':
         x = random.random() * args.width
         y = random.random() * args.height
         data_points.append((x, y))
+
+    with open(args.output_file, 'w') as file:
+        file.write("width, %d\n" % args.width)
+        file.write("height, %d\n" % args.height)
+        file.write("dim, 2\n")
+        file.write("point-count, %d\n" % args.point_count)
+        for (x, y) in data_points:
+            file.write("%f, %f\n" % (x, y))
+
     xs = [x for (x, _) in data_points]
     ys = [y for (_, y) in data_points]
 
