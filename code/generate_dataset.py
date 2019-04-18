@@ -2,6 +2,7 @@
 
 import argparse
 import random
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -26,7 +27,7 @@ if __name__ == '__main__':
                         help="width of the generated schema", default=1000)
     parser.add_argument("-h", "--height", type=float,
                         help="height of the generated schema", default=1000)
-    parser.add_argument("-c", "--cluster-count", type=int, default=5,
+    parser.add_argument("-k", "--cluster-count", type=int, default=5,
                         help="Specify the number of cluster")
     parser.add_argument("-n", "--point-count", type=int, default=1000,
                         help="specify the number of data points")
