@@ -24,6 +24,8 @@ class Point {
 
     Point operator+(const Point &rhs) const;
 
+    Point operator/(const int div) const;
+
   private:
     float x, y;
 

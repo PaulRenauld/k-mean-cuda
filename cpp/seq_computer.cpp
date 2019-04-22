@@ -26,9 +26,45 @@ void seq_computer::init_starting_clusters() {
 }
 
 void seq_computer::update_cluster_positions() {
+  int* count = new int[k];
 
+  for (int j = 0; j < k; ++j) {
+    clusters[j] = new Point();
+  }
+
+  for (int i = 0; i < n; ++i) {
+    int cluster_for_point = cluster_for_point[i];
+    count[cluster_for_point]++;
+    clusters[cluster_for_point] += dataset[i];
+  }
+
+  for (int j = 0; j < k; ++j) {
+    clusters[j] /= count[j];
+  }
 }
 
 bool seq_computer::update_cluster_for_point() {
-  return false;
+  bool change = false;
+
+  for (int i = 0; i < n; i++) {
+    Point datapoint = dataset[i];
+    float min = distance_between(datapoint, ClusterPosition[0]);
+    unsigned short index_min = 0;
+
+    for (int j = 1; j < k; j++) {
+      float distance = distance_between(datapoint, ClusterPosition[j]);
+      if (distance < min) {
+        min = distance;
+        index_min = (unsigned short) j;
+      }
+    }
+
+    if (cluster_for_point[i] != index_min) {
+      cluster_for_point[i] = index_min;
+      change = true;
+    }
+
+  }
+
+  return change;
 }

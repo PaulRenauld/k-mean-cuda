@@ -17,6 +17,10 @@ Point Point::operator+(const Point &rhs) const {
   return Point(this->x + rhs.x, this->y + rhs.y);
 }
 
+Point Point::operator+(const int div) const {
+  return Point(this->x / div, this->y / div);
+}
+
 Point::Point(const std::string &str) {
   unsigned long coma = str.rfind(',');
   x = stof(str.substr(0, coma));
