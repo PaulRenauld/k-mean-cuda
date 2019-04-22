@@ -7,10 +7,10 @@
 
 
 #include "kmean_computer.h"
+#include "data_structure.h"
 
 class seq_computer : public kmean_computer {
   public:
-
     seq_computer(size_t k, size_t n, Dataset dataset) :
             kmean_computer(k, n, dataset) {}
 

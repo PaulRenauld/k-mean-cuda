@@ -8,10 +8,7 @@
 #include <vector>
 #include <ostream>
 #include "Point.h"
-
-typedef Point *Dataset;
-
-typedef Point *ClusterPosition;
+#include "data_structure.h"
 
 class kmean_computer {
   public:
