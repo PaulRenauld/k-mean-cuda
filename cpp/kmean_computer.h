@@ -34,6 +34,10 @@ class kmean_computer {
       return clusters;
     }
 
+    float compute_silhouette() const {
+      return 0;
+    }
+
     friend std::ostream &
     operator<<(std::ostream &os, const kmean_computer &computer) {
       for (size_t curr_k = 0; curr_k < computer.k; ++curr_k) {
