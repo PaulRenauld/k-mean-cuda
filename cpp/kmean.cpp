@@ -19,7 +19,7 @@ void write_output_file(const Computer &computer,
                        const vector<string> &file_args);
 
 bool contains(const string &str, const string &beginning) {
-  return str.find(str, 0) != string::npos;
+  return str.find(beginning, 0) != string::npos;
 }
 
 void delete_whitespaces(string &str) {
@@ -41,11 +41,6 @@ int main(int argc, char *argv[]) {
 
   auto arguments = options.parse(argc, argv);
 
-  std::cout << "Hello, World!" << arguments["output-file"].as<string>()
-            << arguments["input-file"].as<string>()
-            << arguments["cluster-count"].as<size_t>() << std::endl;
-
-
   vector<string> file_args;
   Computer computer = parse_input(arguments, file_args);
   computer.converge();
@@ -61,7 +56,7 @@ void write_output_file(const Computer &computer,
   ofstream output_file(output_file_name);
   if (output_file.is_open()) {
     for (const auto& arg: file_args) {
-      output_file << arg;
+      output_file << arg << std::endl;
     }
     output_file << computer;
     output_file.close();
@@ -89,10 +84,11 @@ parse_input(const cxxopts::ParseResult &arguments, vector<string> &file_args) {
         file_args.push_back(line);
       } else if (contains(line, "width") || contains(line, "height") ||
                  contains(line, "dim")) {
+        cout << "Parameter " << line << endl;
         file_args.push_back(line);
       } else if (!contains(line, "C")) {
         if (i >= n) {
-          cout << "Parsing error: too many points";
+          cout << "Parsing error: too many points" << endl;
         } else {
           points[i++] = Point(line);
         }

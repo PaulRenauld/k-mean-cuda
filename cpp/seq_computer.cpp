@@ -26,16 +26,18 @@ void seq_computer::init_starting_clusters() {
 }
 
 void seq_computer::update_cluster_positions() {
-  int* count = new int[k];
+  size_t count[k];
 
+  Point p0 = Point();
   for (int j = 0; j < k; ++j) {
-    clusters[j] = new Point();
+    clusters[j] = p0;
+    count[j] = 0;
   }
 
   for (int i = 0; i < n; ++i) {
-    int cluster_for_point = cluster_for_point[i];
-    count[cluster_for_point]++;
-    clusters[cluster_for_point] += dataset[i];
+    int cluster= cluster_for_point[i];
+    count[cluster]++;
+    clusters[cluster] += dataset[i];
   }
 
   for (int j = 0; j < k; ++j) {
@@ -46,16 +48,16 @@ void seq_computer::update_cluster_positions() {
 bool seq_computer::update_cluster_for_point() {
   bool change = false;
 
-  for (int i = 0; i < n; i++) {
-    Point datapoint = dataset[i];
-    float min = distance_between(datapoint, ClusterPosition[0]);
+  for (size_t i = 0; i < n; i++) {
+    Point& datapoint = dataset[i];
+    float min = datapoint.distance_squared_to(clusters[0]);
     unsigned short index_min = 0;
 
-    for (int j = 1; j < k; j++) {
-      float distance = distance_between(datapoint, ClusterPosition[j]);
+    for (unsigned short j = 1; j < k; j++) {
+      float distance = datapoint.distance_squared_to(clusters[j]);
       if (distance < min) {
         min = distance;
-        index_min = (unsigned short) j;
+        index_min = j;
       }
     }
 
@@ -63,7 +65,6 @@ bool seq_computer::update_cluster_for_point() {
       cluster_for_point[i] = index_min;
       change = true;
     }
-
   }
 
   return change;

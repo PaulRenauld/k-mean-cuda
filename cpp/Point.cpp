@@ -17,8 +17,18 @@ Point Point::operator+(const Point &rhs) const {
   return Point(this->x + rhs.x, this->y + rhs.y);
 }
 
-Point Point::operator+(const int div) const {
+void Point::operator+=(const Point &rhs) {
+   x += rhs.x;
+   y += rhs.y;
+}
+
+Point Point::operator/(const int div) const {
   return Point(this->x / div, this->y / div);
+}
+
+void Point::operator/=(const int div) {
+  x /= div;
+  y /= div;
 }
 
 Point::Point(const std::string &str) {
@@ -30,4 +40,10 @@ Point::Point(const std::string &str) {
 std::ostream &operator<<(std::ostream &os, const Point &point) {
   os << point.x << ',' << point.y;
   return os;
+}
+
+float Point::distance_squared_to(Point &other) const {
+  float diff_x = x - other.x;
+  float diff_y = y - other.y;
+  return diff_x * diff_x + diff_y * diff_y;
 }

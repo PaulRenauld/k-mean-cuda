@@ -25,7 +25,13 @@ class Point {
 
     Point operator+(const Point &rhs) const;
 
-    Point operator/(const int div) const;
+    void operator+=(const Point &rhs);
+
+    Point operator/(int div) const;
+
+    void operator/=(int div);
+
+    float distance_squared_to(Point &other) const;
 
     friend std::ostream &operator<<(std::ostream &os, const Point &point);
 
