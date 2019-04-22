@@ -31,7 +31,7 @@ if __name__ == '__main__':
                         help="Specify the number of cluster")
     parser.add_argument("-n", "--point-count", type=int, default=1000,
                         help="specify the number of data points")
-    parser.add_argument("-v", "--variance", type=int, default=20,
+    parser.add_argument("-v", "--variance", type=int, default=10,
                         help="specify the variance around the cluster centers")
     parser.add_argument("-r", "--randomness", type=int, default=20, choices=range(0, 101), metavar="[0-100]",
                         help="specify the percentage of points that are not in a cluster")
@@ -44,6 +44,7 @@ if __name__ == '__main__':
         generate_cluster(data_points, args.width, args.height,
                          sample_per_cluster, args.variance)
 
+    print("not random points: " + str(len(data_points)))
     while len(data_points) < args.point_count:
         x = random.random() * args.width
         y = random.random() * args.height
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     xs = [x for (x, _) in data_points]
     ys = [y for (_, y) in data_points]
 
-    plt.plot(xs, ys, 'bo')
+    plt.plot(xs, ys, 'b,')
     plt.axis([0, args.width, 0, args.height])
     plt.show()
 

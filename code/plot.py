@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 
+import random
 import sys
+
 import matplotlib.pyplot as plt
+
+
+def rand_color():
+  return "#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)])
 
 if __name__ == '__main__':
   if len(sys.argv) != 2 or sys.argv[1][0] == '-':
@@ -9,23 +15,23 @@ if __name__ == '__main__':
 
   width = 1000
   height = 1000
-  current_color = 0
-  color = ['b', 'r', 'g', 'c', 'm', 'y', 'k']
+  current_color = '#0000FF'
   with open(sys.argv[1]) as file:
     for line in file.readlines():
       line = "".join(line.split()).split(',')
       if line[0].replace('.', '').isnumeric():
-        plt.plot([float(line[0])], [float(line[1])],
-                 color[current_color] + '.')
+        plt.plot([float(line[0])], [float(line[1])], '.', color=current_color)
       else:
         if line[0] == 'height':
           height = int(line[1])
         elif line[0] == 'width':
           width = int(line[1])
         elif line[0] == 'C':
-          current_color = (current_color + 1) % len(color)
+          print('One more cluster')
+          current_color = rand_color()
           plt.plot([float(line[1])], [float(line[2])],
-                   color[current_color] + '^')
+                '^', color=current_color)
 
   plt.axis([0, width, 0, height])
+  plt.title('Figure 2: K-mean clustering for the optimal k value')
   plt.show()
