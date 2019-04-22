@@ -8,12 +8,18 @@
 
 #include "kmean_computer.h"
 
-class seq_computer: public kmean_computer {
+class seq_computer : public kmean_computer {
   public:
 
-    void init_starting_clusters() override ;
+    seq_computer(size_t k, size_t n, Dataset dataset) :
+            kmean_computer(k, n, dataset) {}
+
+  protected:
+    void init_starting_clusters() override;
+
     // Returns true if something changed
     void update_cluster_positions() override;
+
     bool update_cluster_for_point() override;
 
 };

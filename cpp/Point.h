@@ -7,6 +7,7 @@
 
 
 #include <string>
+#include <ostream>
 
 class Point {
   public:
@@ -23,6 +24,8 @@ class Point {
     bool operator!=(const Point &rhs) const;
 
     Point operator+(const Point &rhs) const;
+
+    friend std::ostream &operator<<(std::ostream &os, const Point &point);
 
   private:
     float x, y;

@@ -22,3 +22,8 @@ Point::Point(const std::string &str) {
   x = stof(str.substr(0, coma));
   y = stof(str.substr(coma + 1));
 }
+
+std::ostream &operator<<(std::ostream &os, const Point &point) {
+  os << point.x << ',' << point.y;
+  return os;
+}
