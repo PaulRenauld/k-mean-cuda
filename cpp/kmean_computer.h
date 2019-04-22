@@ -6,6 +6,7 @@
 #define CPP_KMEAN_COMPUTER_H
 
 #include <vector>
+#include <math.h>
 #include <ostream>
 #include "Point.h"
 #include "data_structure.h"
@@ -32,38 +33,47 @@ class kmean_computer {
     }
 
     float compute_silhouette() const {
-      float avg = 0.0;
+      double avg = 0.0;
       for (size_t i = 0; i < n; ++i) {
         unsigned short cluster = cluster_for_point[i];
         Point& point = dataset[i];
-        float a[k];
-        size_t a_count[k];
+        float mean_to_clust[k];
+        size_t cluster_count[k];
+
+        for (size_t a = 0; a < k; ++a) {
+          mean_to_clust[a] = 0.f;
+          cluster_count[a] = 0;
+        }
 
         for (size_t j = 0; j < n; ++j) {
           unsigned short cluster_j = cluster_for_point[j];
           float distance = sqrt(point.distance_squared_to(dataset[j]));
 
-          a[cluster_j] += distance;
-          a_count[cluster_j]++;
+          mean_to_clust[cluster_j] += distance;
+          cluster_count[cluster_j]++;
         }
 
-        a_count[cluster]--;
+        cluster_count[cluster]--;
 
-        float b = ;
+        float b_i = HUGE_VALF;
         float a_i = 0.0;
 
         for (int c = 0; c < k; ++c) {
-          a[c] /= a_count[c];
+          mean_to_clust[c] /= cluster_count[c];
 
           if (c == cluster) {
-            a_i = a[c];
-          }
-          else if (a[c] < b) {
-            b = a[c];
+            a_i = mean_to_clust[c];
+          } else if (mean_to_clust[c] < b_i) {
+            b_i = mean_to_clust[c];
           }
         }
+
+        float denom = std::max(a_i, b_i);
+        float s = (b_i - a_i) / denom;
+        avg += s;
       }
 
+      avg /= n;
       return avg;
     }
 
