@@ -35,7 +35,39 @@ class kmean_computer {
     }
 
     float compute_silhouette() const {
-      return 0;
+      float avg = 0.0;
+      for (size_t i = 0; i < n; ++i) {
+        unsigned short cluster = cluster_for_point[i];
+        Point& point = dataset[i];
+        float a[k];
+        size_t a_count[k];
+
+        for (size_t j = 0; j < n; ++j) {
+          unsigned short cluster_j = cluster_for_point[j];
+          float distance = sqrt(point.distance_squared_to(dataset[j]));
+
+          a[cluster_j] += distance;
+          a_count[cluster_j]++;
+        }
+
+        a_count[cluster]--;
+
+        float b = ;
+        float a_i = 0.0;
+
+        for (int c = 0; c < k; ++c) {
+          a[c] /= a_count[c];
+
+          if (c == cluster) {
+            a_i = a[c];
+          }
+          else if (a[c] < b) {
+            b = a[c];
+          }
+        }
+      }
+
+      return avg;
     }
 
     friend std::ostream &
