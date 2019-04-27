@@ -2,7 +2,8 @@
 #include <fstream>
 #include <string>
 
-// #include "cxxopts.hpp"
+// #include "cxxopts.hpp"#include <stdio.h>
+#include <getopt.h>
 #include "kmean_computer.h"
 #include "Point.h"
 #include "seq_computer.h"
@@ -11,12 +12,14 @@
 
 using namespace std;
 
-Dataset parse_input(const cxxopts::ParseResult &arguments,
+Dataset parse_input(string input_file_name,
                     vector<string> &file_args, size_t *n);
 
 void write_output_file(const Computer &computer,
-                       const cxxopts::ParseResult &arguments,
+                       const string output_file_name,
                        const vector<string> &file_args);
+
+void usage(char *string);
 
 bool contains(const string &str, const string &beginning) {
   return str.find(beginning, 0) != string::npos;
@@ -27,34 +30,47 @@ void delete_whitespaces(string &str) {
 }
 
 int main(int argc, char *argv[]) {
-  cxxopts::Options options("Sequential K-mean",
-                           "Divide the dataset into k clusters");
-  options.show_positional_help();
+  int opt;
+  static struct option long_options[] = {
+          {"help",     no_argument, 0,  '?'},
+          {"output-file",    required_argument, 0,  'o'},
+          {"input-file",    required_argument, 0,  'i'},
+          {"cluster-count",     required_argument, 0,  'k'},
+          {0 ,0, 0, 0}
+  };
 
-  options.add_options()
-          ("o,output-file", "Name of the file to store the generated arguments",
-           cxxopts::value<std::string>()->default_value("results"))
-          ("i,input-file", "Name of the file to read the graph",
-           cxxopts::value<std::string>()->default_value("random_points"))
-          ("k,cluster-count",
-           "Specify the number of cluster, if nothing is specified, this will try several k",
-           cxxopts::value<int>()->default_value("-1"));
+  string output_file = "results", input_file = "random_points";
+  int k = -1;
 
-  auto arguments = options.parse(argc, argv);
+  while ((opt = getopt_long(argc, argv, "o:i:k?", long_options, NULL)) != EOF) {
+    switch (opt) {
+      case 'o':
+        output_file = optarg;
+        break;
+      case 'i':
+        input_file = optarg;
+        break;
+      case 'k':
+        k = (int) atoi(optarg);
+        break;
+      default:
+        usage(argv[0]);
+        exit(1);
+    }
+  }
 
   vector<string> file_args;
   size_t n = 0;
-  Dataset points = parse_input(arguments, file_args, &n);
-  int k = arguments["cluster-count"].as<int>();
+  Dataset points = parse_input(input_file, file_args, &n);
 
   if (k > 0) {
     Computer computer(k, n, points);
     computer.converge();
-    write_output_file(computer, arguments, file_args);
+    write_output_file(computer, output_file, file_args);
   } else {
     silhouette_finder finder(n, points);
     Computer* best = finder.find_best_k(2, 100, &cout);
-    write_output_file(*best, arguments, file_args);
+    write_output_file(*best, output_file, file_args);
   }
 
   delete [] points;
@@ -62,10 +78,18 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+void usage(char *string) {
+  printf("Usage: %s [-o output_file] [-i input_file] [-k cluster_count]\n", string);
+  printf("Program Options:\n");
+  printf("  -o  --output-file  <FILENAME>  Specify the output path for the cluster file\n");
+  printf("  -i  --input-file  <FILENAME>   Name of the file to read the graph\n");
+  printf("  -k  --cluster-count  <K>       Specify the number of cluster, if nothing is specified, this will try several k\n");
+  printf("  -?  --help                     This message\n");
+}
+
 void write_output_file(const Computer &computer,
-                       const cxxopts::ParseResult &arguments,
+                       const string output_file_name,
                        const vector<string> &file_args) {
-  const string output_file_name = arguments["output-file"].as<string>();
   ofstream output_file(output_file_name);
   if (output_file.is_open()) {
     for (const auto &arg: file_args) {
@@ -76,9 +100,8 @@ void write_output_file(const Computer &computer,
   } else cout << "Unable to open file";
 }
 
-Dataset parse_input(const cxxopts::ParseResult &arguments,
+Dataset parse_input(string input_file_name,
                     vector<string> &file_args, size_t *n) {
-  string input_file_name = arguments["input-file"].as<string>();
 
   string line;
   Point *points = nullptr;
