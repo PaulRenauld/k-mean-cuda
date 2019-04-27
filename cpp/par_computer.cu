@@ -21,6 +21,49 @@ struct GlobalConstants {
 
 __constant__ GlobalConstants cuConstParams;
 
+__device__ __inline__ float distance_square(Point first, Point second) {
+  float diff_x = first.x - second.x;
+  float diff_y = first.y - second.y;
+  return diff_x * diff_x + diff_y * diff_y;
+}
+
+__global__ void kernel_update_cluster(bool* change) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  Point& datapoint = cuConstParams.dataset[index];
+  float min = distance_square(datapoint, cuConstParams.clusters[0]);
+  unsigned short index_min = 0;
+
+  for (unsigned short j = 1; j < cuConstParams.k; j++) {
+    float distance = distance_square(datapoint, cuConstParams.clusters[j]);
+    if (distance < min) {
+      min = distance;
+      index_min = j;
+    }
+  }
+
+  if (cuConstParams.cluster_for_point[index] != index_min) {
+    cuConstParams.cluster_for_point[index] = index_min;
+    *change = true;
+  }
+}
+
+__global__ void kernel_update_cluster_positions() {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int count = 0;
+  Point position;
+
+  for (int i = 0; i < cuConstParams.n; ++i) {
+    if (cuConstParams.cluster_for_point[i] == index) {
+      count++;
+      position += cuConstParams.cluster_for_point[i];
+    }
+  }
+
+  position /= count;
+  cuConstParams.clusters[index] = position;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,11 +119,25 @@ void par_computer::init_starting_clusters() {
 }
 
 void par_computer::update_cluster_positions() {
+  dim3 blockDim(256, 1);
+  dim3 gridDim((k + blockDim.x - 1) / blockDim.x);
 
+  kernel_update_cluster_positions<<<gridDim, blockDim>>>();
 }
 
 bool par_computer::update_cluster_for_point() {
+  dim3 blockDim(256, 1);
+  dim3 gridDim((n + blockDim.x - 1) / blockDim.x);
 
+  bool* change;
+  cudaMalloc(&change, sizeof(bool));
+
+  kernel_update_cluster<<<gridDim, blockDim>>>(change);
+
+  bool changeHost;
+  cudaMemcpy(&changeHost, change, cudaMemcpyDeviceToHost);
+
+  return changeHost;
 }
 
 ClusterPosition par_computer::converge() {
