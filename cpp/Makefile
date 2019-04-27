@@ -4,7 +4,7 @@ CU_FILES   := par_computer.cu
 
 CU_DEPS    :=
 
-CC_FILES   := kmean.cpp Point.cpp kmean_computer.cpp seq_computer.cpp silhouette_finder.cpp
+CC_FILES   := kmean.cpp Point.cpp kmean_computer.cpp seq_computer.cpp silhouette_finder.cpp 
 
 LOGS	   := logs
 
@@ -38,11 +38,11 @@ LDFRAMEWORKS := $(addprefix -framework , $(FRAMEWORKS))
 
 NVCC=nvcc
 
-OBJS=$(OBJDIR)/kmean_computer.o $(OBJDIR)/Point.o 
+OBJS=$(OBJDIR)/kmean_computer.o 
 
-SEQ_OBJS=$(OBJDIR)/silhouette_finder_seq.o $(OBJDIR)/seq_computer.o
+SEQ_OBJS=$(OBJDIR)/silhouette_finder_seq.o $(OBJDIR)/seq_computer.o $(OBJDIR)/Point_seq.o 
 
-PAR_OBJS=$(OBJDIR)/silhouette_finder_par.o $(OBJDIR)/par_computer.o
+PAR_OBJS=$(OBJDIR)/silhouette_finder_par.o $(OBJDIR)/par_computer.o $(OBJDIR)/Point_par.o 
 
 
 .PHONY: dirs clean
@@ -55,20 +55,20 @@ dirs:
 clean:
 	rm -rf $(OBJDIR) *~ $(EXECUTABLES) $(LOGS)
 
-kmean-seq: $(OBJS) $(SEQ_OBJS) kmean.cpp 
+kmean-seq: $(OBJS) $(SEQ_OBJS) 
 	$(CXX) $(CXXFLAGS) -DCUDA=0 -o $@ kmean.cpp $(OBJS) $(SEQ_OBJS) $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
 
 kmean-par: $(OBJS) $(PAR_OBJS) kmean.cpp 
-	$(CXX) $(CXXFLAGS) -DCUDA=1 -o $@ kmean.cpp $(OBJS) $(PAR_OBJS) $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
+	$(NVCC) $(NVCCFLAGS) -DCUDA=1 -o $@ kmean.cpp $(OBJS) $(PAR_OBJS) $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
+
+$(OBJDIR)/%_seq.o: %.cpp
+	$(CXX) $< $(CXXFLAGS) -DCUDA=0 -c -o $@
+
+$(OBJDIR)/%_par.o: %.cpp
+	$(NVCC) $< $(NVCCFLAGS) -DCUDA=1 -c -o $@
 
 $(OBJDIR)/%.o: %.cpp
 	$(CXX) $< $(CXXFLAGS) -c -o $@
 
 $(OBJDIR)/%.o: %.cu
-	$(NVCC) $< $(NVCCFLAGS) -c -o $@
-
-$(OBJDIR)/silhouette_finder_seq.o: silhouette_finder.cpp
-	$(CXX) $< $(CXXFLAGS) -DCUDA=0 -c -o $@
-
-$(OBJDIR)/silhouette_finder_par.o: silhouette_finder.cpp
-	$(CXX) $< $(CXXFLAGS) -DCUDA=1 -c -o $@
+	$(NVCC) $< $(NVCCFLAGS) -DCUDA=1 -c -o $@

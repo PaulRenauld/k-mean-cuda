@@ -21,21 +21,18 @@ struct GlobalConstants {
 
 __constant__ GlobalConstants cuConstParams;
 
-__device__ __inline__ float distance_square(Point first, Point second) {
-  float diff_x = first.x - second.x;
-  float diff_y = first.y - second.y;
-  return diff_x * diff_x + diff_y * diff_y;
-}
 
 __global__ void kernel_update_cluster(bool* change) {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
+  if (index >= cuConstParams.n) return;
+
   Point& datapoint = cuConstParams.dataset[index];
-  float min = distance_square(datapoint, cuConstParams.clusters[0]);
+  float min = datapoint.distance_squared_to(cuConstParams.clusters[0]);
   unsigned short index_min = 0;
 
   for (unsigned short j = 1; j < cuConstParams.k; j++) {
-    float distance = distance_square(datapoint, cuConstParams.clusters[j]);
+    float distance = datapoint.distance_squared_to(cuConstParams.clusters[j]);
     if (distance < min) {
       min = distance;
       index_min = j;
@@ -50,13 +47,16 @@ __global__ void kernel_update_cluster(bool* change) {
 
 __global__ void kernel_update_cluster_positions() {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (index >= cuConstParams.k) return;
+
   int count = 0;
   Point position;
 
   for (int i = 0; i < cuConstParams.n; ++i) {
     if (cuConstParams.cluster_for_point[i] == index) {
       count++;
-      position += cuConstParams.cluster_for_point[i];
+      position += cuConstParams.dataset[i];
     }
   }
 
@@ -134,7 +134,7 @@ bool par_computer::update_cluster_for_point() {
   kernel_update_cluster<<<gridDim, blockDim>>>(change);
 
   bool changeHost;
-  cudaMemcpy(&changeHost, change, cudaMemcpyDeviceToHost);
+  cudaMemcpy(&changeHost, change, sizeof(bool), cudaMemcpyDeviceToHost);
 
   return changeHost;
 }

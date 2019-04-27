@@ -9,29 +9,35 @@
 #include <string>
 #include <ostream>
 
+#if CUDA==1
+    #include <cuda.h>
+    #include <cuda_runtime.h>
+#else
+    #define __device__
+    #define __host__
+#endif
+
 class Point {
   public:
-    Point(float x, float y) : x(x), y(y) {
-    }
+    __device__ __host__ Point(float x, float y) : x(x), y(y) {}
 
-    Point() : x(0), y(0) {
-    }
+    __device__ __host__ Point() : x(0), y(0) {}
 
-    Point(const std::string &str);
+    __device__ __host__ Point(const std::string &str);
 
-    bool operator==(const Point &rhs) const;
+    __device__ __host__ bool operator==(const Point &rhs) const;
 
-    bool operator!=(const Point &rhs) const;
+    __device__ __host__ bool operator!=(const Point &rhs) const;
 
-    Point operator+(const Point &rhs) const;
+    __device__ __host__ Point operator+(const Point &rhs) const;
 
-    void operator+=(const Point &rhs);
+    __device__ __host__ void operator+=(const Point &rhs);
 
-    Point operator/(int div) const;
+    __device__ __host__ Point operator/(int div) const;
 
-    void operator/=(int div);
+    __device__ __host__ void operator/=(int div);
 
-    float distance_squared_to(Point &other) const;
+    __device__ __host__ float distance_squared_to(Point &other) const;
 
     friend std::ostream &operator<<(std::ostream &os, const Point &point);
 
