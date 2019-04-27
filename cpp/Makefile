@@ -5,7 +5,7 @@ CU_FILES   :=
 
 CU_DEPS    :=
 
-CC_FILES   := cxxopts.hpp kmean.cpp Point.cpp seq_computer.cpp silhouette_finder.cpp
+CC_FILES   := cxxopts.hpp kmean.cpp Point.cpp kmean_computer.cpp seq_computer.cpp silhouette_finder.cpp
 
 LOGS	   := logs
 
@@ -39,7 +39,7 @@ LDFRAMEWORKS := $(addprefix -framework , $(FRAMEWORKS))
 
 NVCC=nvcc
 
-OBJS=$(OBJDIR)/cxxopts.o $(OBJDIR)/Point.o $(OBJDIR)/seq_computer.o $(OBJDIR)/silhouette_finder.o
+OBJS=$(OBJDIR)/kmean_computer.o $(OBJDIR)/Point.o $(OBJDIR)/seq_computer.o $(OBJDIR)/silhouette_finder.o
 
 
 .PHONY: dirs clean
@@ -55,15 +55,20 @@ clean:
 check:	default
 	./checker.pl
 
-$(EXECUTABLE): dirs $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(HEADERS) $(OBJS) 
+$(EXECUTABLE): $(OBJS) kmean.cpp 
+	$(CXX) $(CXXFLAGS) -o $@ kmean.cpp $(OBJS)
 # $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
 
 $(OBJDIR)/cxxopts.o: 
-	$(CXX) $(CXXFLAGS) -o $@ cxxopts.hpp
+	$(CXX) cxxopts.hpp $(CXXFLAGS) -c -o $@ 
 
 $(OBJDIR)/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $(HEADERS)
+	$(CXX) $< $(CXXFLAGS) -c -o $@
 
 $(OBJDIR)/%.o: %.cu
 	$(NVCC) $< $(NVCCFLAGS) -c -o $@
+
+objs: $(OBJDIR)/all_objs.o
+
+$(OBJDIR)/all_objs.o: dirs $(OBJS)
+	$(CXX) $(HEADERS) $(CXXFLAGS) -o $@ $(OBJS) 

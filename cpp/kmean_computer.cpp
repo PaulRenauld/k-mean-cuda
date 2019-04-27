@@ -46,7 +46,7 @@ float kmean_computer::compute_silhouette() const {
     float b_i = HUGE_VALF;
     float a_i = 0.0;
 
-    for (int c = 0; c < k; ++c) {
+    for (size_t c = 0; c < k; ++c) {
       mean_to_clust[c] /= cluster_count[c];
 
       if (c == cluster) {
@@ -68,7 +68,7 @@ float kmean_computer::compute_silhouette() const {
 std::ostream &operator<<(std::ostream &os, const kmean_computer &computer) {
   for (size_t curr_k = 0; curr_k < computer.k; ++curr_k) {
     os << "C," << computer.clusters[curr_k] << std::endl;
-    for (int i = 0; i < computer.n; ++i) {
+    for (size_t i = 0; i < computer.n; ++i) {
       if (computer.cluster_for_point[i] == curr_k) {
         os << computer.dataset[i] << std::endl;
       }

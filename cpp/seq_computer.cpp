@@ -12,15 +12,14 @@
 void seq_computer::init_starting_clusters() {
   std::default_random_engine generator;
   std::uniform_int_distribution<size_t> distribution(0, n - 1);
-  auto random_index = std::bind ( distribution, generator );
 
-  std::set<size_t, std::greater<>> positions;
+  std::set<size_t, std::greater<size_t>> positions;
   while (positions.size() < k) {
-    positions.insert(random_index());
+    positions.insert(distribution(generator));
   }
 
   size_t i = 0;
-  for (auto index: positions) {
+  for (auto const& index: positions) {
     clusters[i++] = dataset[index];
   }
 }
@@ -29,18 +28,18 @@ void seq_computer::update_cluster_positions() {
   size_t count[k];
 
   Point p0 = Point();
-  for (int j = 0; j < k; ++j) {
+  for (size_t j = 0; j < k; ++j) {
     clusters[j] = p0;
     count[j] = 0;
   }
 
-  for (int i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i) {
     int cluster= cluster_for_point[i];
     count[cluster]++;
     clusters[cluster] += dataset[i];
   }
 
-  for (int j = 0; j < k; ++j) {
+  for (size_t j = 0; j < k; ++j) {
     clusters[j] /= count[j];
   }
 }

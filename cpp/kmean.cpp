@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 
-#include "cxxopts.hpp"
+// #include "cxxopts.hpp"
 #include "kmean_computer.h"
 #include "Point.h"
 #include "seq_computer.h"
@@ -29,6 +29,7 @@ void delete_whitespaces(string &str) {
 int main(int argc, char *argv[]) {
   cxxopts::Options options("Sequential K-mean",
                            "Divide the dataset into k clusters");
+  options.show_positional_help();
 
   options.add_options()
           ("o,output-file", "Name of the file to store the generated arguments",
