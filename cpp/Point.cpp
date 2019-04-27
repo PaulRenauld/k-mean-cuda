@@ -3,6 +3,7 @@
 //
 
 #include "Point.h"
+#include <string>
 
 bool Point::operator==(const Point &rhs) const {
   return x == rhs.x &&
@@ -33,8 +34,8 @@ void Point::operator/=(const int div) {
 
 Point::Point(const std::string &str) {
   unsigned long coma = str.rfind(',');
-  x = stof(str.substr(0, coma));
-  y = stof(str.substr(coma + 1));
+  x = std::stof(str.substr(0, coma));
+  y = std::stof(str.substr(coma + 1));
 }
 
 std::ostream &operator<<(std::ostream &os, const Point &point) {
