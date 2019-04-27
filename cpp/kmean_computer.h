@@ -17,7 +17,7 @@ class kmean_computer {
 
     ~kmean_computer();
 
-    ClusterPosition converge();
+    virtual ClusterPosition converge();
 
     float compute_silhouette() const;
 

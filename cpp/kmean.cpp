@@ -1,12 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
-// #include "cxxopts.hpp"#include <stdio.h>
+#include <stdio.h>
 #include <getopt.h>
+#include <algorithm>
+
 #include "kmean_computer.h"
 #include "Point.h"
-#include "seq_computer.h"
+// #include "seq_computer.h"
 #include "silhouette_finder.h"
 
 
@@ -79,6 +80,7 @@ int main(int argc, char *argv[]) {
 }
 
 void usage(char *string) {
+  printf("%s computer\n", COMPUTER_TYPE);
   printf("Usage: %s [-o output_file] [-i input_file] [-k cluster_count]\n", string);
   printf("Program Options:\n");
   printf("  -o  --output-file  <FILENAME>  Specify the output path for the cluster file\n");

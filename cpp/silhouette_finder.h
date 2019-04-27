@@ -6,11 +6,22 @@
 #define CPP_SILHOUETTE_FINDER_H
 
 #include <iostream>
+#include <string>
 #include "data_structure.h"
 #include "kmean_computer.h"
-#include "seq_computer.h"
 
-typedef seq_computer Computer;
+#if CUDA==1
+  #warning "Using cuda"
+  #include "par_computer.h"
+  #define COMPUTER_TYPE "Parallel"
+  typedef par_computer Computer;
+#else
+  #warning "Using seq"
+  #include "seq_computer.h"
+  #define COMPUTER_TYPE "Sequential"
+  typedef seq_computer Computer;
+#endif
+
 
 class silhouette_finder {
   public:

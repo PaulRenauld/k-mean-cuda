@@ -25,7 +25,7 @@ __constant__ GlobalConstants cuConstParams;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void par_computer::par_computer(size_t k, size_t n, Dataset dataset) k(k), n(n), dataset(dataset){
+par_computer::par_computer(size_t k, size_t n, Dataset dataset) : kmean_computer(k, n, dataset) {
   clusters = new Point[k];
   cluster_for_point = new unsigned short[n];
 
@@ -50,7 +50,7 @@ void par_computer::par_computer(size_t k, size_t n, Dataset dataset) k(k), n(n),
 
 }
 
-void par_computer::~par_computer() {
+par_computer::~par_computer() {
   delete[] clusters;
   delete[] cluster_for_point;
 
@@ -62,11 +62,10 @@ void par_computer::~par_computer() {
 void par_computer::init_starting_clusters() {
   std::default_random_engine generator;
   std::uniform_int_distribution<size_t> distribution(0, n - 1);
-  auto random_index = std::bind ( distribution, generator );
 
-  std::set<size_t, std::greater<>> positions;
+  std::set<size_t, std::greater<size_t>> positions;
   while (positions.size() < k) {
-    positions.insert(random_index());
+    positions.insert(distribution(generator));
   }
 
   size_t i = 0;

@@ -7,6 +7,7 @@
 
 #include "Point.h"
 #include "data_structure.h"
+#include "kmean_computer.h"
 
 class par_computer : public kmean_computer {
   public:

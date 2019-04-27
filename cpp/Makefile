@@ -1,11 +1,10 @@
-CXX=g++
-EXECUTABLE := kmean-seq
+EXECUTABLES:= kmean-seq kmean-par
 
-CU_FILES   :=
+CU_FILES   := par_computer.cu
 
 CU_DEPS    :=
 
-CC_FILES   := cxxopts.hpp kmean.cpp Point.cpp kmean_computer.cpp seq_computer.cpp silhouette_finder.cpp
+CC_FILES   := kmean.cpp Point.cpp kmean_computer.cpp seq_computer.cpp silhouette_finder.cpp
 
 LOGS	   := logs
 
@@ -23,7 +22,7 @@ LIBS       :=
 FRAMEWORKS :=
 
 #TODO switch to 61 and update ref
-NVCCFLAGS=-O3 -m64 --gpu-architecture compute_35
+NVCCFLAGS=-std=c++11 -O3 -m64 --gpu-architecture compute_35
 LIBS += GL glut cudart
 
 ifneq ($(wildcard /opt/cuda-8.0/.*),)
@@ -39,28 +38,28 @@ LDFRAMEWORKS := $(addprefix -framework , $(FRAMEWORKS))
 
 NVCC=nvcc
 
-OBJS=$(OBJDIR)/kmean_computer.o $(OBJDIR)/Point.o $(OBJDIR)/seq_computer.o $(OBJDIR)/silhouette_finder.o
+OBJS=$(OBJDIR)/kmean_computer.o $(OBJDIR)/Point.o 
+
+SEQ_OBJS=$(OBJDIR)/silhouette_finder_seq.o $(OBJDIR)/seq_computer.o
+
+PAR_OBJS=$(OBJDIR)/silhouette_finder_par.o $(OBJDIR)/par_computer.o
 
 
 .PHONY: dirs clean
 
-default: $(EXECUTABLE)
+default: $(EXECUTABLES)
 
 dirs:
 	mkdir -p $(OBJDIR)/
 
 clean:
-	rm -rf $(OBJDIR) *~ $(EXECUTABLE) $(LOGS)
+	rm -rf $(OBJDIR) *~ $(EXECUTABLES) $(LOGS)
 
-check:	default
-	./checker.pl
+kmean-seq: $(OBJS) $(SEQ_OBJS) kmean.cpp 
+	$(CXX) $(CXXFLAGS) -DCUDA=0 -o $@ kmean.cpp $(OBJS) $(SEQ_OBJS) $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
 
-$(EXECUTABLE): $(OBJS) kmean.cpp 
-	$(CXX) $(CXXFLAGS) -o $@ kmean.cpp $(OBJS)
-# $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
-
-$(OBJDIR)/cxxopts.o: 
-	$(CXX) cxxopts.hpp $(CXXFLAGS) -c -o $@ 
+kmean-par: $(OBJS) $(PAR_OBJS) kmean.cpp 
+	$(CXX) $(CXXFLAGS) -DCUDA=1 -o $@ kmean.cpp $(OBJS) $(PAR_OBJS) $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
 
 $(OBJDIR)/%.o: %.cpp
 	$(CXX) $< $(CXXFLAGS) -c -o $@
@@ -68,7 +67,8 @@ $(OBJDIR)/%.o: %.cpp
 $(OBJDIR)/%.o: %.cu
 	$(NVCC) $< $(NVCCFLAGS) -c -o $@
 
-objs: $(OBJDIR)/all_objs.o
+$(OBJDIR)/silhouette_finder_seq.o: silhouette_finder.cpp
+	$(CXX) $< $(CXXFLAGS) -DCUDA=0 -c -o $@
 
-$(OBJDIR)/all_objs.o: dirs $(OBJS)
-	$(CXX) $(HEADERS) $(CXXFLAGS) -o $@ $(OBJS) 
+$(OBJDIR)/silhouette_finder_par.o: silhouette_finder.cpp
+	$(CXX) $< $(CXXFLAGS) -DCUDA=1 -c -o $@
