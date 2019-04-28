@@ -44,8 +44,7 @@ std::ostream &operator<<(std::ostream &os, const Point &point) {
 }
 
 __device__ float Point::distance_squared_to(Point &other) const {
-  // float diff_x = x - other.x;
-  // float diff_y = y - other.y;
-  // return diff_x * diff_x + diff_y * diff_y;
-  return 20;
+  float diff_x = x - other.x;
+  float diff_y = y - other.y;
+  return diff_x * diff_x + diff_y * diff_y;
 }

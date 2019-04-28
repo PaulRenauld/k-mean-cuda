@@ -68,3 +68,5 @@ bool seq_computer::update_cluster_for_point() {
 
   return change;
 }
+
+void seq_computer::after_converge() {}

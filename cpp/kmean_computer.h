@@ -17,7 +17,7 @@ class kmean_computer {
 
     ~kmean_computer();
 
-    virtual ClusterPosition converge();
+    ClusterPosition converge();
 
     float compute_silhouette() const;
 
@@ -38,6 +38,9 @@ class kmean_computer {
     virtual void update_cluster_positions() = 0;
 
     virtual bool update_cluster_for_point() = 0;
+
+    // Action that should be done after converge is executed
+    virtual void after_converge() = 0;
 };
 
 #endif //CPP_KMEAN_COMPUTER_H

@@ -1,6 +1,19 @@
 
 #include "kmean_computer.h"
+#include <thread>
+#include <chrono>
+#include <iostream>
+#include <stdio.h>
 
+
+typedef std::chrono::high_resolution_clock Clock;
+typedef std::chrono::milliseconds milliseconds;
+typedef Clock::time_point time_type;
+
+inline long difftime(time_type t0, time_type t1) {
+  milliseconds ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
+  return ms.count();
+}
 kmean_computer::~kmean_computer() {
   delete[] clusters;
   delete[] cluster_for_point;
@@ -14,10 +27,17 @@ kmean_computer::kmean_computer(size_t k, size_t n, Dataset dataset) :
 
 ClusterPosition kmean_computer::converge() {
   init_starting_clusters();
+  
+  time_type t0 = Clock::now();
   while (update_cluster_for_point()) {
     update_cluster_positions();
   }
-  return clusters;
+  after_converge();
+
+  time_type t1 = Clock::now();
+  long time = difftime(t0, t1);
+  std::cout << "Total time: " << time << "ms" << std::endl;
+  return clusters; 
 }
 
 float kmean_computer::compute_silhouette() const {

@@ -22,6 +22,8 @@ class seq_computer : public kmean_computer {
 
     bool update_cluster_for_point() override;
 
+    void after_converge() override;
+
 };
 
 
