@@ -9,7 +9,7 @@
 #include <iterator>
 #include <random>
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 #define cudaCheckKernelError() cudaCheckError( cudaDeviceSynchronize () )
@@ -123,6 +123,17 @@ __global__ void kernel_update_cluster_positions() {
   cuConstParams.accumulators[k].count = 0;
 }
 
+__global__ void kernel_inner_silhouette(Point point, float *mean_to_clust, unsigned int *cluster_count) {
+  int j = blockIdx.x * blockDim.x + threadIdx.x;
+  if (j >= cuConstParams.n) return;
+
+  unsigned short cluster_j = cuConstParams.cluster_for_point[j];
+  float distance = sqrtf(distance_square(point, cuConstParams.dataset[j]));
+
+  mean_to_clust[cluster_j] += distance;
+  cluster_count[cluster_j]++;
+}
+
 __global__ void kernel_silhouette(float *avg, float *glob_dist, unsigned int *glob_count, unsigned int offset) {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -149,6 +160,11 @@ __global__ void kernel_silhouette(float *avg, float *glob_dist, unsigned int *gl
     mean_to_clust[cluster_j] += distance;
     cluster_count[cluster_j]++;
   }
+  // dim3 blockDim(256, 1);
+  // dim3 gridDim((n + blockDim.x - 1) / blockDim.x, 1);
+  // kernel_inner_silhouette<<<gridDim, blockDim>>>(point, mean_to_clust, cluster_count);
+  // // cudaCheckKernelError();
+
 
   cluster_count[cluster]--;
 
@@ -275,7 +291,7 @@ float par_computer::compute_silhouette() const {
   cudaCheckError( cudaMalloc(&avg_ptr, sizeof(float)) );
   cudaCheckError( cudaMemcpy(avg_ptr, &avg, sizeof(float), cudaMemcpyHostToDevice) );
 
-  unsigned int offset = next_multiple_of(k * sizeof(float), 128);
+  unsigned int offset = k;
 
   float *glob_dist;
   cudaCheckError( cudaMalloc(&glob_dist, sizeof(float) * n * offset) );

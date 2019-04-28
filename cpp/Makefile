@@ -22,7 +22,7 @@ LIBS       :=
 FRAMEWORKS :=
 
 #TODO switch to 61 and update ref
-NVCCFLAGS=-std=c++11 -O3 -m64 --gpu-architecture compute_61
+NVCCFLAGS=-std=c++11 -O3 -m64 --gpu-architecture compute_61 -rdc=true
 LIBS += GL glut cudart
 
 LDFLAGS=-L/usr/local/depot/cuda-8.0/lib64/ -lcudart
