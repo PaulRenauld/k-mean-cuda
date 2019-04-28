@@ -15,6 +15,7 @@
 #else
     #define __device__
     #define __host__
+    #define __inline__
 #endif
 
 class Point {
@@ -41,7 +42,7 @@ class Point {
 
     friend std::ostream &operator<<(std::ostream &os, const Point &point);
 
-  private:
+  // private:
     float x, y;
 
 };

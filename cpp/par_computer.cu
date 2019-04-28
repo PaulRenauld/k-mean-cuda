@@ -2,11 +2,31 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <driver_functions.h>
 
 #include <iostream>
 #include <set>
 #include <iterator>
 #include <random>
+
+#define DEBUG
+
+#ifdef DEBUG
+#define cudaCheckError(ans)  cudaAssert((ans), __FILE__, __LINE__);
+inline void cudaAssert(cudaError_t code, const char
+*
+file, int line, bool abort=true)
+{
+if (code != cudaSuccess)
+{
+fprintf(stderr, "CUDA Error: %s at %s:%d\n",
+cudaGetErrorString(code), file, line);
+if (abort) exit(code);
+}
+}
+#else
+#define cudaCheckError(ans) ans
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // All cuda kernels here
@@ -21,47 +41,62 @@ struct GlobalConstants {
 
 __constant__ GlobalConstants cuConstParams;
 
+__device__ float distance_square(Point first, Point second) {
+  float diff_x = first.x - second.x;
+  float diff_y = first.y - second.y;
+  return diff_x * diff_x + diff_y * diff_y;
+}
 
 __global__ void kernel_update_cluster(bool* change) {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
+  printf("THE FUCK\n");
 
   if (index >= cuConstParams.n) return;
 
-  Point& datapoint = cuConstParams.dataset[index];
-  float min = datapoint.distance_squared_to(cuConstParams.clusters[0]);
+  Point datapoint = cuConstParams.dataset[index];
+  // *((int*)NULL) = 15;
+  Point f = cuConstParams.clusters[0];
+  float minimum = datapoint.distance_squared_to(f);
+  // float minimum = distance_square(datapoint, f);
   unsigned short index_min = 0;
 
   for (unsigned short j = 1; j < cuConstParams.k; j++) {
-    float distance = datapoint.distance_squared_to(cuConstParams.clusters[j]);
-    if (distance < min) {
-      min = distance;
-      index_min = j;
-    }
+  //   float distance = datapoint.distance_squared_to(cuConstParams.clusters[j]);
+  //   if (distance < minimum) {
+  //     minimum = distance;
+  //     index_min = j;
+  //   }
   }
-
-  if (cuConstParams.cluster_for_point[index] != index_min) {
-    cuConstParams.cluster_for_point[index] = index_min;
-    *change = true;
-  }
+  // printf("k=%zu\n", cuConstParams.k);
+  // if (cuConstParams.cluster_for_point[index] != index_min) {
+  //   printf("New cluster for point: %u \n", index_min);
+  //   cuConstParams.cluster_for_point[index] = index_min;
+  //   *change = true;
+  // }
+  printf("THE FUCK3333\n");
+  return;
 }
 
 __global__ void kernel_update_cluster_positions() {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
+  printf("THE FUCK2\n");
+  // *((int*)NULL) = 15;
 
   if (index >= cuConstParams.k) return;
 
-  int count = 0;
-  Point position;
+  // int count = 0;
+  // Point position;
 
-  for (int i = 0; i < cuConstParams.n; ++i) {
-    if (cuConstParams.cluster_for_point[i] == index) {
-      count++;
-      position += cuConstParams.dataset[i];
-    }
-  }
+  // for (int i = 0; i < cuConstParams.n; ++i) {
+  //   if (cuConstParams.cluster_for_point[i] == index) {
+  //     count++;
+  //     position += cuConstParams.dataset[i];
+  //   }
+  // }
 
-  position /= count;
-  cuConstParams.clusters[index] = position;
+  // position /= count;
+  // cuConstParams.clusters[index] = position;
+  return;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,18 +104,15 @@ __global__ void kernel_update_cluster_positions() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 par_computer::par_computer(size_t k, size_t n, Dataset dataset) : kmean_computer(k, n, dataset) {
-  clusters = new Point[k];
-  cluster_for_point = new unsigned short[n];
-
   init_starting_clusters(); 
 
-  cudaMalloc(&cudaDeviceDataset, sizeof(Point) * n);
-  cudaMemcpy(cudaDeviceDataset, dataset, sizeof(Point) * n, cudaMemcpyHostToDevice);
+  cudaCheckError( cudaMalloc(&cudaDeviceDataset, sizeof(Point) * n) );
+  cudaCheckError( cudaMemcpy(cudaDeviceDataset, dataset, sizeof(Point) * n, cudaMemcpyHostToDevice) );
 
-  cudaMalloc(&cudaDeviceClusters, sizeof(Point) * k);
-  cudaMemcpy(cudaDeviceClusters, clusters, sizeof(Point) * k, cudaMemcpyHostToDevice);
+  cudaCheckError( cudaMalloc(&cudaDeviceClusters, sizeof(Point) * k) );
+  cudaCheckError( cudaMemcpy(cudaDeviceClusters, clusters, sizeof(Point) * k, cudaMemcpyHostToDevice) );
 
-  cudaMalloc(&cuda_device_cluster_for_point, sizeof(unsigned short) * n);
+  cudaCheckError( cudaMalloc(&cuda_device_cluster_for_point, sizeof(unsigned short) * n) );
 
   GlobalConstants params;
   params.k = k;
@@ -89,14 +121,12 @@ par_computer::par_computer(size_t k, size_t n, Dataset dataset) : kmean_computer
   params.clusters = cudaDeviceClusters;
   params.cluster_for_point = cuda_device_cluster_for_point;
 
-  cudaMemcpyToSymbol(cuConstParams, &params, sizeof(GlobalConstants));
+  cudaCheckError( cudaMemcpyToSymbol(cuConstParams, &params, sizeof(GlobalConstants)) );
 
+  cudaCheckError( cudaDeviceSynchronize() );
 }
 
 par_computer::~par_computer() {
-  delete[] clusters;
-  delete[] cluster_for_point;
-
   cudaFree(cudaDeviceDataset);
   cudaFree(cudaDeviceClusters);
   cudaFree(cuda_device_cluster_for_point);
@@ -122,29 +152,36 @@ void par_computer::update_cluster_positions() {
   dim3 gridDim((k + blockDim.x - 1) / blockDim.x);
 
   kernel_update_cluster_positions<<<gridDim, blockDim>>>();
+  cudaCheckError( cudaDeviceSynchronize() );
 }
 
 bool par_computer::update_cluster_for_point() {
   dim3 blockDim(256, 1);
-  dim3 gridDim((n + blockDim.x - 1) / blockDim.x);
+  dim3 gridDim(1, 1);
 
   bool* change;
-  cudaMalloc(&change, sizeof(bool));
+  cudaCheckError( cudaMalloc(&change, sizeof(bool)) );
 
   kernel_update_cluster<<<gridDim, blockDim>>>(change);
+  cudaCheckError( cudaDeviceSynchronize() );
 
-  bool changeHost;
-  cudaMemcpy(&changeHost, change, sizeof(bool), cudaMemcpyDeviceToHost);
+  bool changeHost = false;
+  cudaCheckError( cudaMemcpy(&changeHost, change, sizeof(bool), cudaMemcpyDeviceToHost) );
 
   return changeHost;
 }
 
 ClusterPosition par_computer::converge() {
+
+  std::cout << "Converge" << n << " " << k << std::endl;
   while (update_cluster_for_point()) {
+    std::cout << "One iteration" << std::endl;
     update_cluster_positions();
   }
+    update_cluster_positions();
 
-  cudaMemcpy(clusters, cudaDeviceClusters, sizeof(Point) * k, cudaMemcpyDeviceToHost);
+  cudaCheckError( cudaMemcpy(clusters, cudaDeviceClusters, sizeof(Point) * k, cudaMemcpyDeviceToHost) );
+  cudaCheckError( cudaMemcpy(cluster_for_point, cuda_device_cluster_for_point, sizeof(unsigned short) * n, cudaMemcpyDeviceToHost) );
 
   return clusters;
 }

@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
   string output_file = "results", input_file = "random_points";
   int k = -1;
 
-  while ((opt = getopt_long(argc, argv, "o:i:k?", long_options, NULL)) != EOF) {
+  while ((opt = getopt_long(argc, argv, "o:i:k:?", long_options, NULL)) != EOF) {
     switch (opt) {
       case 'o':
         output_file = optarg;

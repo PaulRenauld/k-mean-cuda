@@ -69,6 +69,7 @@ std::ostream &operator<<(std::ostream &os, const kmean_computer &computer) {
   for (size_t curr_k = 0; curr_k < computer.k; ++curr_k) {
     os << "C," << computer.clusters[curr_k] << std::endl;
     for (size_t i = 0; i < computer.n; ++i) {
+      if (computer.cluster_for_point[i] >= computer.k) os << "out of bound cluster " <<  computer.cluster_for_point[i] << std::endl;
       if (computer.cluster_for_point[i] == curr_k) {
         os << computer.dataset[i] << std::endl;
       }

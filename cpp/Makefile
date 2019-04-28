@@ -22,27 +22,21 @@ LIBS       :=
 FRAMEWORKS :=
 
 #TODO switch to 61 and update ref
-NVCCFLAGS=-std=c++11 -O3 -m64 --gpu-architecture compute_35
+NVCCFLAGS=-std=c++11 -O3 -m64 --gpu-architecture compute_61
 LIBS += GL glut cudart
 
-ifneq ($(wildcard /opt/cuda-8.0/.*),)
-# Latedays
-LDFLAGS=-L/opt/cuda-8.0/lib64/ -lcudart
-else
-# GHC
 LDFLAGS=-L/usr/local/depot/cuda-8.0/lib64/ -lcudart
-endif
 
 LDLIBS  := $(addprefix -l, $(LIBS))
 LDFRAMEWORKS := $(addprefix -framework , $(FRAMEWORKS))
 
 NVCC=nvcc
 
-OBJS=$(OBJDIR)/kmean_computer.o 
+OBJS=
 
-SEQ_OBJS=$(OBJDIR)/silhouette_finder_seq.o $(OBJDIR)/seq_computer.o $(OBJDIR)/Point_seq.o 
+SEQ_OBJS=$(OBJDIR)/silhouette_finder_seq.o $(OBJDIR)/seq_computer.o $(OBJDIR)/Point_seq.o $(OBJDIR)/kmean_computer_seq.o 
 
-PAR_OBJS=$(OBJDIR)/silhouette_finder_par.o $(OBJDIR)/par_computer.o $(OBJDIR)/Point_par.o 
+PAR_OBJS=$(OBJDIR)/silhouette_finder_par.o $(OBJDIR)/par_computer.o $(OBJDIR)/Point_par.o $(OBJDIR)/kmean_computer_par.o 
 
 
 .PHONY: dirs clean
