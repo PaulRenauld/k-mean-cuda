@@ -4,10 +4,27 @@
 
 #include "silhouette_finder.h"
 
+#include <thread>
+#include <chrono>
+#include <iostream>
+#include <stdio.h>
+
+
+typedef std::chrono::high_resolution_clock Clock;
+typedef std::chrono::milliseconds milliseconds;
+typedef Clock::time_point time_type;
+
+inline long difftime(time_type t0, time_type t1) {
+  milliseconds ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
+  return ms.count();
+}
+
 
 Computer *
 silhouette_finder::find_best_k(size_t min, size_t max, std::ostream *out) {
   if (max == -1) max = n;
+
+  time_type t0 = Clock::now();
 
   for (size_t k = min; k < max; ++k) {
     float sil = try_k(k);
@@ -15,6 +32,10 @@ silhouette_finder::find_best_k(size_t min, size_t max, std::ostream *out) {
       *out << "silhouette with k=" << k << ": " << sil << std::endl;
     }
   }
+
+  time_type t1 = Clock::now();
+  long time = difftime(t0, t1);
+  std::cout << "Total time to find best k: " << time << "ms" << std::endl;
 
   return best_cluster;
 }

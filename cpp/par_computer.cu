@@ -9,7 +9,7 @@
 #include <iterator>
 #include <random>
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define cudaCheckKernelError() cudaCheckError( cudaDeviceSynchronize () )
@@ -44,6 +44,8 @@ struct GlobalConstants {
   ClusterAccumulator *accumulators;
   unsigned short *cluster_for_point;
 };
+
+#define POINT_PER_THREAD 128
 
 __constant__ GlobalConstants cuConstParams;
 
@@ -91,9 +93,12 @@ __global__ void kernel_update_cluster_accumulators() {
   }
   __syncthreads();
 
-  if (index < cuConstParams.n) {
-    Point point = cuConstParams.dataset[index];
-    size_t cluster = cuConstParams.cluster_for_point[index];
+  size_t max = (index + 1) * POINT_PER_THREAD;
+  max = max > cuConstParams.n ? cuConstParams.n : max;
+  
+  for (size_t i = index * POINT_PER_THREAD; i < max; ++i) {
+    Point point = cuConstParams.dataset[i];
+    size_t cluster = cuConstParams.cluster_for_point[i];
     atomicAdd(&accs[cluster].x, point.x);
     atomicAdd(&accs[cluster].y, point.y);
     atomicAdd(&accs[cluster].count, 1);
@@ -118,9 +123,63 @@ __global__ void kernel_update_cluster_positions() {
   cuConstParams.accumulators[k].count = 0;
 }
 
+__global__ void kernel_silhouette(float *avg, float *glob_dist, unsigned int *glob_count, unsigned int offset) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (i >= cuConstParams.n) return;
+
+  const size_t n  = cuConstParams.n;
+  const size_t k  = cuConstParams.k;
+
+  float *mean_to_clust = glob_dist + i * offset;
+  unsigned int *cluster_count = glob_count + i * offset;
+
+  unsigned short cluster = cuConstParams.cluster_for_point[i];
+  Point point = cuConstParams.dataset[i];
+
+  for (size_t a = 0; a < k; ++a) {
+    mean_to_clust[a] = 0.f;
+    cluster_count[a] = 0;
+  }
+
+  for (size_t j = 0; j < n; ++j) {
+    unsigned short cluster_j = cuConstParams.cluster_for_point[j];
+    float distance = sqrtf(distance_square(point, cuConstParams.dataset[j]));
+
+    mean_to_clust[cluster_j] += distance;
+    cluster_count[cluster_j]++;
+  }
+
+  cluster_count[cluster]--;
+
+  float b_i = HUGE_VALF;
+  float a_i = 0.0;
+
+  for (size_t c = 0; c < k; ++c) {
+    if (cluster_count[c] > 0) {
+      mean_to_clust[c] /= cluster_count[c];
+    } else {
+      mean_to_clust[c] = 0;
+    }
+
+    if (c == cluster) {
+      a_i = mean_to_clust[c];
+    } else if (mean_to_clust[c] < b_i && mean_to_clust[c] != 0) {
+      b_i = mean_to_clust[c];
+    }
+  }
+
+  float denom = max(a_i, b_i);
+  float s = (b_i - a_i) / denom;
+  atomicAdd(avg, s);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+inline unsigned int next_multiple_of(unsigned int x, unsigned int mod) {
+  return mod * (x / mod + 1);
+}
 
 par_computer::par_computer(size_t k, size_t n, Dataset dataset) : kmean_computer(k, n, dataset) {
   cudaCheckError( cudaMalloc(&cudaDeviceDataset, sizeof(Point) * n) );
@@ -176,7 +235,7 @@ void par_computer::init_starting_clusters() {
 
 void par_computer::update_cluster_positions() {
   dim3 blockDim(256, 1);
-  dim3 gridDim((n + blockDim.x - 1) / blockDim.x);
+  dim3 gridDim(n / (blockDim.x + POINT_PER_THREAD) + 1);
   kernel_update_cluster_accumulators<<<gridDim, blockDim, k * sizeof(ClusterAccumulator)>>>();
   cudaCheckKernelError();
 
@@ -186,7 +245,7 @@ void par_computer::update_cluster_positions() {
 }
 
 bool par_computer::update_cluster_for_point() {
-  dim3 blockDim(256, 1);
+  dim3 blockDim(512, 1);
   dim3 gridDim((n + blockDim.x - 1) / blockDim.x, 1);
 
   bool* change;
@@ -198,6 +257,8 @@ bool par_computer::update_cluster_for_point() {
   bool changeHost = false;
   cudaCheckError( cudaMemcpy(&changeHost, change, sizeof(bool), cudaMemcpyDeviceToHost) );
 
+  // cudaCheckError( cudaFree(change) );
+
   return changeHost;
 }
 
@@ -205,4 +266,34 @@ bool par_computer::update_cluster_for_point() {
 void par_computer::after_converge() {
   cudaCheckError( cudaMemcpy(clusters, cudaDeviceClusters, sizeof(Point) * k, cudaMemcpyDeviceToHost) );
   cudaCheckError( cudaMemcpy(cluster_for_point, cuda_device_cluster_for_point, sizeof(unsigned short) * n, cudaMemcpyDeviceToHost) );
+}
+
+
+float par_computer::compute_silhouette() const {
+  float* avg_ptr;
+  float avg = 0;
+  cudaCheckError( cudaMalloc(&avg_ptr, sizeof(float)) );
+  cudaCheckError( cudaMemcpy(avg_ptr, &avg, sizeof(float), cudaMemcpyHostToDevice) );
+
+  unsigned int offset = next_multiple_of(k * sizeof(float), 128);
+
+  float *glob_dist;
+  cudaCheckError( cudaMalloc(&glob_dist, sizeof(float) * n * offset) );
+
+  unsigned int *glob_count;
+  cudaCheckError( cudaMalloc(&glob_count, sizeof(unsigned int) * n * offset) );
+
+  dim3 blockDim(256, 1);
+  dim3 gridDim((n + blockDim.x - 1) / blockDim.x, 1);
+  kernel_silhouette<<<gridDim, blockDim>>>(avg_ptr, glob_dist, glob_count, offset);
+  cudaCheckKernelError();
+
+  cudaCheckError( cudaFree(glob_dist) );
+  cudaCheckError( cudaFree(glob_count) );
+
+  cudaCheckError( cudaMemcpy(&avg, avg_ptr, sizeof(float), cudaMemcpyDeviceToHost) );
+  // cudaCheckError( cudaFree(avg_ptr) );
+  
+  avg /= n;
+  return avg;
 }

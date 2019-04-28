@@ -19,6 +19,8 @@ class par_computer : public kmean_computer {
     par_computer(size_t k, size_t n, Dataset dataset);
     ~par_computer();
 
+    float compute_silhouette() const override;
+
   private:
 
     Dataset cudaDeviceDataset;

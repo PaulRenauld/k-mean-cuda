@@ -14,6 +14,7 @@ inline long difftime(time_type t0, time_type t1) {
   milliseconds ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
   return ms.count();
 }
+
 kmean_computer::~kmean_computer() {
   delete[] clusters;
   delete[] cluster_for_point;
@@ -36,7 +37,7 @@ ClusterPosition kmean_computer::converge() {
 
   time_type t1 = Clock::now();
   long time = difftime(t0, t1);
-  std::cout << "Total time: " << time << "ms" << std::endl;
+  std::cout << "Total time for k=" << k << ": " << time << "ms" << std::endl;
   return clusters; 
 }
 

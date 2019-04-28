@@ -70,7 +70,7 @@ bool seq_computer::update_cluster_for_point() {
 }
 
 float seq_computer::compute_silhouette() const {
-  double avg = 0.0;
+  float avg = 0.0;
   for (size_t i = 0; i < n; ++i) {
     unsigned short cluster = cluster_for_point[i];
     Point &point = dataset[i];
