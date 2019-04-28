@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     write_output_file(computer, output_file, file_args);
   } else {
     silhouette_finder finder(n, points);
-    Computer* best = finder.find_best_k(2, 10, &cout);
+    Computer* best = finder.find_best_k(2, 40, &cout);
     write_output_file(*best, output_file, file_args);
   }
 
