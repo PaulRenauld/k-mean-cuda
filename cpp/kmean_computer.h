@@ -1,7 +1,3 @@
-//
-// Created by Paul Renauld on 2019-04-22.
-//
-
 #ifndef CPP_KMEAN_COMPUTER_H
 #define CPP_KMEAN_COMPUTER_H
 
@@ -19,7 +15,7 @@ class kmean_computer {
 
     ClusterPosition converge();
 
-    float compute_silhouette() const;
+    virtual float compute_silhouette() const = 0;
 
     friend std::ostream &operator<<(std::ostream &os,
                                     const kmean_computer &computer);

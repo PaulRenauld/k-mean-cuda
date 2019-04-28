@@ -25,7 +25,10 @@
 
 class silhouette_finder {
   public:
-    silhouette_finder(size_t n, Dataset dataset) : dataset(dataset), n(n) {}
+    silhouette_finder(size_t n, Dataset dataset) : dataset(dataset), n(n) {
+      best_cluster = nullptr;
+      best_silhouette = -2;
+    }
 
     virtual ~silhouette_finder();
 
@@ -38,7 +41,7 @@ class silhouette_finder {
     const Dataset dataset;
     const size_t n;
     Computer *best_cluster;
-    float best_silhouette = -2;
+    float best_silhouette;
 
 };
 

@@ -14,6 +14,10 @@ class seq_computer : public kmean_computer {
     seq_computer(size_t k, size_t n, Dataset dataset) :
             kmean_computer(k, n, dataset) {}
 
+    virtual ~seq_computer();
+
+    float compute_silhouette() const override;
+
   protected:
     void init_starting_clusters() override;
 

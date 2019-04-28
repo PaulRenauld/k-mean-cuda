@@ -50,7 +50,7 @@ clean:
 	rm -rf $(OBJDIR) *~ $(EXECUTABLES) $(LOGS)
 
 kmean-seq: $(OBJS) $(SEQ_OBJS) 
-	$(CXX) $(CXXFLAGS) -DCUDA=0 -o $@ kmean.cpp $(OBJS) $(SEQ_OBJS) $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)
+	$(CXX) $(CXXFLAGS) -DCUDA=0 -o $@ kmean.cpp $(OBJS) $(SEQ_OBJS)
 
 kmean-par: $(OBJS) $(PAR_OBJS) kmean.cpp 
 	$(NVCC) $(NVCCFLAGS) -DCUDA=1 -o $@ kmean.cpp $(OBJS) $(PAR_OBJS) $(LDFLAGS) $(LDLIBS) $(LDFRAMEWORKS)

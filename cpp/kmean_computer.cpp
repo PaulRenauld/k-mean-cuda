@@ -40,51 +40,6 @@ ClusterPosition kmean_computer::converge() {
   return clusters; 
 }
 
-float kmean_computer::compute_silhouette() const {
-  double avg = 0.0;
-  for (size_t i = 0; i < n; ++i) {
-    unsigned short cluster = cluster_for_point[i];
-    Point &point = dataset[i];
-    float mean_to_clust[k];
-    size_t cluster_count[k];
-
-    for (size_t a = 0; a < k; ++a) {
-      mean_to_clust[a] = 0.f;
-      cluster_count[a] = 0;
-    }
-
-    for (size_t j = 0; j < n; ++j) {
-      unsigned short cluster_j = cluster_for_point[j];
-      float distance = sqrt(point.distance_squared_to(dataset[j]));
-
-      mean_to_clust[cluster_j] += distance;
-      cluster_count[cluster_j]++;
-    }
-
-    cluster_count[cluster]--;
-
-    float b_i = HUGE_VALF;
-    float a_i = 0.0;
-
-    for (size_t c = 0; c < k; ++c) {
-      mean_to_clust[c] /= cluster_count[c];
-
-      if (c == cluster) {
-        a_i = mean_to_clust[c];
-      } else if (mean_to_clust[c] < b_i) {
-        b_i = mean_to_clust[c];
-      }
-    }
-
-    float denom = std::max(a_i, b_i);
-    float s = (b_i - a_i) / denom;
-    avg += s;
-  }
-
-  avg /= n;
-  return avg;
-}
-
 std::ostream &operator<<(std::ostream &os, const kmean_computer &computer) {
   for (size_t curr_k = 0; curr_k < computer.k; ++curr_k) {
     os << "C," << computer.clusters[curr_k] << std::endl;
