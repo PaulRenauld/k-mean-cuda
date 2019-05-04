@@ -23,8 +23,15 @@ for k in range(100, 510, 100):
         time_p = int(output[-2])
         time_cpu[k][n] = time_c
         time_gpu[k][n] = time_p
-        print(time_c)
-        print(time_p)
+
+
+file = ""
+for k in range(100, 510, 100):
+    for n in range(100000, 1000001, 200000):
+    	file += "k: " + str(k) + " n: " + str(n) + " seq: " + str(time_cpu[k][n]) + " par: " + str(time_gpu[k][n]) + "\n"
+
+f = open('results', 'w')
+f.write(file)
 
 # Scale n
 x1, y1 = zip(*sorted(time_gpu[500].items()))
