@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 def rand_color():
   return "#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)])
 
+
 if __name__ == '__main__':
   if len(sys.argv) != 2 or sys.argv[1][0] == '-':
     print("Usage: plot.py <file-to-plot>")

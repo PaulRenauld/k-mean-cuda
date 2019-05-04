@@ -416,3 +416,6 @@ cpp/.idea
 code/kmean-seq
 code/kmean-par
 **/*.kds
+cpp/kmean-seq
+cpp/res_seq
+cpp/time
