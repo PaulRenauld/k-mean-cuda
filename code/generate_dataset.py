@@ -63,6 +63,6 @@ if __name__ == '__main__':
 
     plt.plot(xs, ys, 'b,')
     plt.axis([0, args.width, 0, args.height])
-    plt.show()
+    #plt.show()
 
     print(args)
