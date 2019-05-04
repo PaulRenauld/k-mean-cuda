@@ -51,7 +51,7 @@ plt.show()
 m = np.zeros((6, 6))
 for k, v in sorted(time_gpu.items()):
 	for k2, v2 in sorted(v.items()):
-		m[k / 100][k2 / 100000] = (1.0 * time_cpu[k][k2]) / v2
+		m[k / 100][k2 / 200000] = (1.0 * time_cpu[k][k2]) / v2
 		#m.append(((k, k2), v2 / (1.0 * time_cpu[k][k2])))
 print(m[1:,1:])
 plt.imshow(m[1:,1:], cmap='hot', interpolation='nearest')
