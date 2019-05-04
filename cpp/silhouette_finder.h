@@ -25,14 +25,14 @@
 
 class silhouette_finder {
   public:
-    silhouette_finder(size_t n, Dataset dataset) : dataset(dataset), n(n) {
-      best_cluster = nullptr;
-      best_silhouette = -2;
-    }
+    silhouette_finder(size_t n, Dataset dataset, bool approx_silhouette = false)
+            :
+            dataset(dataset), n(n), approx_silhouette(approx_silhouette),
+            best_cluster(nullptr), best_silhouette(-2) {}
 
     virtual ~silhouette_finder();
 
-    Computer *find_best_k(size_t min = 1, size_t max = -1,
+    Computer *find_best_k(size_t min, size_t max, size_t step,
                                std::ostream *out = nullptr);
 
     float try_k(size_t k);
@@ -40,6 +40,7 @@ class silhouette_finder {
   private:
     const Dataset dataset;
     const size_t n;
+    const bool approx_silhouette;
     Computer *best_cluster;
     float best_silhouette;
 

@@ -7,7 +7,6 @@
 
 #include "kmean_computer.h"
 #include "Point.h"
-// #include "seq_computer.h"
 #include "silhouette_finder.h"
 
 
@@ -33,17 +32,23 @@ void delete_whitespaces(string &str) {
 int main(int argc, char *argv[]) {
   int opt;
   static struct option long_options[] = {
-          {"help",     no_argument, 0,  '?'},
-          {"output-file",    required_argument, 0,  'o'},
+          {"help", no_argument, 0,  '?'},
+          {"output-file",   required_argument, 0,  'o'},
           {"input-file",    required_argument, 0,  'i'},
-          {"cluster-count",     required_argument, 0,  'k'},
+          {"cluster-count", required_argument, 0,  'k'},
+          {"min",  required_argument, 0,  'm'},
+          {"max",  required_argument, 0,  'M'},
+          {"step", required_argument, 0,  's'},
+          {"approximation", optional_argument, 0,  'a'},
           {0 ,0, 0, 0}
   };
 
   string output_file = "results", input_file = "random_points";
   int k = -1;
+  int min = 2, max = 100, step = 1;
+  bool approx = false;
 
-  while ((opt = getopt_long(argc, argv, "o:i:k:?", long_options, NULL)) != EOF) {
+  while ((opt = getopt_long(argc, argv, "o:i:k:m:M:s:a?", long_options, NULL)) != EOF) {
     switch (opt) {
       case 'o':
         output_file = optarg;
@@ -53,6 +58,18 @@ int main(int argc, char *argv[]) {
         break;
       case 'k':
         k = (int) atoi(optarg);
+        break;
+      case 'm':
+        min = (int) atoi(optarg);
+        break;
+      case 'M':
+        max = (int) atoi(optarg);
+        break;
+      case 's':
+        step = (int) atoi(optarg);
+        break;
+      case 'a':
+        approx = true;
         break;
       default:
         usage(argv[0]);
@@ -69,8 +86,8 @@ int main(int argc, char *argv[]) {
     computer.converge();
     write_output_file(computer, output_file, file_args);
   } else {
-    silhouette_finder finder(n, points);
-    Computer* best = finder.find_best_k(2, 40, &cout);
+    silhouette_finder finder(n, points, approx);
+    Computer* best = finder.find_best_k(min, max, step, &cout);
     write_output_file(*best, output_file, file_args);
   }
 
@@ -81,11 +98,15 @@ int main(int argc, char *argv[]) {
 
 void usage(char *string) {
   printf("%s computer\n", COMPUTER_TYPE);
-  printf("Usage: %s [-o output_file] [-i input_file] [-k cluster_count]\n", string);
+  printf("Usage: %s [-o output_file] [-i input_file] [-k cluster_count/ -m min -M max -s step] [-a]\n", string);
   printf("Program Options:\n");
   printf("  -o  --output-file  <FILENAME>  Specify the output path for the cluster file\n");
   printf("  -i  --input-file  <FILENAME>   Name of the file to read the graph\n");
   printf("  -k  --cluster-count  <K>       Specify the number of cluster, if nothing is specified, this will try several k\n");
+  printf("  -m  --min  <min>               Specify the minimum number of cluster to try when trying to find the best k (default 2) Doesn't apply when k is specified\n");
+  printf("  -M  --max  <max>               Specify the maximum number of cluster to try when trying to find the best k (default 100) Doesn't apply when k is specified\n");
+  printf("  -s  --step  <step>             Specify the step size when trying to find the best k (default 1) Doesn't apply when k is specified\n");
+  printf("  -a  --approximation            Use an optimized approximation of the silhouette when trying to find the best k. Doesn't apply when k is specified\n");
   printf("  -?  --help                     This message\n");
 }
 

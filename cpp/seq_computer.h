@@ -16,7 +16,8 @@ class seq_computer : public kmean_computer {
 
     virtual ~seq_computer();
 
-    float compute_silhouette() const override;
+    float compute_silhouette_approximation() const override;
+    float compute_silhouette_all() const override;
 
   protected:
     void init_starting_clusters() override;

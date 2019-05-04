@@ -15,7 +15,8 @@ class kmean_computer {
 
     ClusterPosition converge();
 
-    virtual float compute_silhouette() const = 0;
+    virtual float compute_silhouette_approximation() const = 0;
+    virtual float compute_silhouette_all() const = 0;
 
     friend std::ostream &operator<<(std::ostream &os,
                                     const kmean_computer &computer);
