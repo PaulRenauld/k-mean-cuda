@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
           {0 ,0, 0, 0}
   };
 
-  string output_file = "results", input_file = "random_points";
+  string output_file = "results.kds", input_file = "random_points.kds";
   string time_file_name = "";
   int k = -1;
   int min = 2, max = 100, step = 1;

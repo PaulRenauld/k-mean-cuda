@@ -22,7 +22,7 @@ def generate_cluster(data_points, max_width, max_height, n: int, variance):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Generate a dataset with cluster", conflict_handler="resolve")
     parser.add_argument("-o", "--output-file", type=str,
-                        help="Name of the file to store the generated graph", default="random_points")
+                        help="Name of the file to store the generated graph", default="random_points.kds")
     parser.add_argument("-w", "--width", type=float,
                         help="width of the generated schema", default=1000)
     parser.add_argument("-h", "--height", type=float,
