@@ -37,6 +37,7 @@ silhouette_finder::find_best_k(size_t min, size_t max, size_t step, std::ostream
   long time = difftime(t0, t1);
   if (out != nullptr) {
     *out << "Total time to find best k: " << time << "ms" << std::endl;
+    *out << time << std::endl;
   }
 
   return best_cluster;

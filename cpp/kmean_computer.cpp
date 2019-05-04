@@ -38,6 +38,7 @@ ClusterPosition kmean_computer::converge() {
   time_type t1 = Clock::now();
   long time = difftime(t0, t1);
   std::cout << "Total time for k=" << k << ": " << time << "ms" << std::endl;
+  std::cout << time << std::endl;
   return clusters; 
 }
 

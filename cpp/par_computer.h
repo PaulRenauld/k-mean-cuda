@@ -18,8 +18,8 @@ class par_computer : public kmean_computer {
   public:
     par_computer(size_t k, size_t n, Dataset dataset);
     ~par_computer();
-
-    float compute_silhouette() const override;
+    float compute_silhouette_approximation() const override;
+    float compute_silhouette_all() const override;
 
   private:
 
@@ -27,6 +27,12 @@ class par_computer : public kmean_computer {
     ClusterPosition cudaDeviceClusters;
     unsigned short *cuda_device_cluster_for_point;
     ClusterAccumulator *clusterAccumulators;
+    bool *change;
+
+    dim3 block_dim_points, grid_dim_points;
+    dim3 block_dim_clusters, grid_dim_clusters;
+
+    float compute_silhouette(bool approx) const;
 
 
   protected:
