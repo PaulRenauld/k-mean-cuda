@@ -412,3 +412,10 @@ $RECYCLE.BIN/
 # End of https://www.gitignore.io/api/c,c++,cuda,linux,macos,clion,python,windows,intellij
 
 code/.idea
+cpp/.idea
+code/kmean-seq
+code/kmean-par
+**/*.kds
+cpp/kmean-seq
+cpp/res_seq
+cpp/time
