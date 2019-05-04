@@ -35,7 +35,7 @@ class silhouette_finder {
     Computer *find_best_k(size_t min, size_t max, size_t step,
                                std::ostream *out = nullptr);
 
-    float try_k(size_t k);
+    float try_k(size_t k, std::ostream *out = nullptr);
 
   private:
     const Dataset dataset;

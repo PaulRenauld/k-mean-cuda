@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
   static struct option long_options[] = {
           {"help", no_argument, 0,  '?'},
           {"output-file",   required_argument, 0,  'o'},
+          {"time-file",   required_argument, 0,  'O'},
           {"input-file",    required_argument, 0,  'i'},
           {"cluster-count", required_argument, 0,  'k'},
           {"min",  required_argument, 0,  'm'},
@@ -44,11 +45,12 @@ int main(int argc, char *argv[]) {
   };
 
   string output_file = "results", input_file = "random_points";
+  string time_file_name = "";
   int k = -1;
   int min = 2, max = 100, step = 1;
   bool approx = false;
 
-  while ((opt = getopt_long(argc, argv, "o:i:k:m:M:s:a?", long_options, NULL)) != EOF) {
+  while ((opt = getopt_long(argc, argv, "O:o:i:k:m:M:s:a?", long_options, NULL)) != EOF) {
     switch (opt) {
       case 'o':
         output_file = optarg;
@@ -71,6 +73,9 @@ int main(int argc, char *argv[]) {
       case 'a':
         approx = true;
         break;
+      case 'O':
+        time_file_name = optarg;
+        break;
       default:
         usage(argv[0]);
         exit(1);
@@ -87,7 +92,16 @@ int main(int argc, char *argv[]) {
     write_output_file(computer, output_file, file_args);
   } else {
     silhouette_finder finder(n, points, approx);
-    Computer* best = finder.find_best_k(min, max, step, &cout);
+    Computer *best = nullptr;
+    if (time_file_name.length() != 0) {
+      ofstream time_file(time_file_name);
+      if (time_file.is_open()) {
+        best = finder.find_best_k(min, max, step, &time_file);
+        time_file.close();
+      } else cout << "Unable to open time file";
+    } else {
+      best = finder.find_best_k(min, max, step, &cout);
+    }
     write_output_file(*best, output_file, file_args);
   }
 
@@ -107,6 +121,7 @@ void usage(char *string) {
   printf("  -M  --max  <max>               Specify the maximum number of cluster to try when trying to find the best k (default 100) Doesn't apply when k is specified\n");
   printf("  -s  --step  <step>             Specify the step size when trying to find the best k (default 1) Doesn't apply when k is specified\n");
   printf("  -a  --approximation            Use an optimized approximation of the silhouette when trying to find the best k. Doesn't apply when k is specified\n");
+  printf("  -O  --time-file <FILENAME>     If specified, write the time taken to find the best k in the file with other information in CSV\n");
   printf("  -?  --help                     This message\n");
 }
 

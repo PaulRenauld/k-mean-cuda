@@ -26,34 +26,44 @@ silhouette_finder::find_best_k(size_t min, size_t max, size_t step, std::ostream
 
   time_type t0 = Clock::now();
 
+  if (out != nullptr) *out << "k, silhouette, converge-time, silhouette-time, total-time" << std::endl;
+
   for (size_t k = min; k < max; k += step) {
-    float sil = try_k(k);
-    if (out != nullptr) {
-      *out << "silhouette with k=" << k << ": " << sil << std::endl;
-    }
+    float sil = try_k(k, out);
   }
 
   time_type t1 = Clock::now();
   long time = difftime(t0, t1);
   if (out != nullptr) {
-    *out << "Total time to find best k: " << time << "ms" << std::endl;
-    *out << time << std::endl;
+    std::cout << "Total time to find best k: " << time << "ms" << std::endl;
+    std::cout << time << std::endl;
   }
 
   return best_cluster;
 }
 
-float silhouette_finder::try_k(size_t k) {
+float silhouette_finder::try_k(size_t k, std::ostream *out) {
+  time_type t0 = Clock::now();
   Computer *computer = new Computer(k, n, dataset);
+
+  time_type t1 = Clock::now();
   computer->converge();
+  time_type t2 = Clock::now();
   float sil = approx_silhouette ? computer->compute_silhouette_approximation()
                                 : computer->compute_silhouette_all();
+  time_type t3 = Clock::now();
   if (sil > best_silhouette) {
     best_silhouette = sil;
     delete best_cluster;
     best_cluster = computer;
   } else {
     delete computer;
+  }
+  if (out != nullptr) {
+    *out << k << "," << sil << ","
+         << difftime(t1, t2) << ","
+         << difftime(t2, t3) << ","
+         << difftime(t0, t3) << std::endl;
   }
   return sil;
 }
