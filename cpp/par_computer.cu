@@ -32,20 +32,7 @@ inline void cudaAssert(cudaError_t code, const char *file,
 ////////////////////////////////////////////////////////////////////////////////////////
 // All cuda kernels here
 ///////////////////////////////////////////////////////////////////////////////////////
-
-struct GlobalConstants {
-  size_t k;
-  size_t n;
-  Dataset dataset;
-  ClusterPosition clusters;
-  ClusterAccumulator *accumulators;
-  unsigned short *cluster_for_point;
-  bool *change;
-};
-
 #define POINT_PER_THREAD 128
-
-__constant__ GlobalConstants cuConstParams;
 
 __device__ float distance_square(Point first, Point second) {
   float diff_x = first.x - second.x;
@@ -53,7 +40,7 @@ __device__ float distance_square(Point first, Point second) {
   return diff_x * diff_x + diff_y * diff_y;
 }
 
-__global__ void kernel_update_cluster() {
+__global__ void kernel_update_cluster(GlobalConstants cuConstParams) {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (index >= cuConstParams.n) return;
@@ -79,7 +66,7 @@ __global__ void kernel_update_cluster() {
   return;
 }
 
-__global__ void kernel_update_cluster_accumulators() {
+__global__ void kernel_update_cluster_accumulators(GlobalConstants cuConstParams) {
   extern __shared__ ClusterAccumulator accs[];
   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -109,7 +96,7 @@ __global__ void kernel_update_cluster_accumulators() {
   }
 }
 
-__global__ void kernel_update_cluster_positions() {
+__global__ void kernel_update_cluster_positions(GlobalConstants cuConstParams) {
   int k = blockIdx.x * blockDim.x + threadIdx.x;
   if (k >= cuConstParams.k) return;
   ClusterAccumulator acc = cuConstParams.accumulators[k];
@@ -121,7 +108,7 @@ __global__ void kernel_update_cluster_positions() {
 }
 
 
-__global__ void kernel_silhouette_all(float *avg, float *glob_dist, unsigned int *glob_count) {
+__global__ void kernel_silhouette_all(GlobalConstants cuConstParams, float *avg, float *glob_dist, unsigned int *glob_count) {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (i >= cuConstParams.n) return;
@@ -172,7 +159,7 @@ __global__ void kernel_silhouette_all(float *avg, float *glob_dist, unsigned int
   atomicAdd(avg, s);
 }
 
-__global__ void kernel_silhouette_approx(float *avg) {
+__global__ void kernel_silhouette_approx(GlobalConstants cuConstParams, float *avg) {
   __shared__ float shared_avg;
   if (threadIdx.x == 0) {
     shared_avg = 0;
@@ -226,16 +213,13 @@ par_computer::par_computer(size_t k, size_t n, Dataset dataset) :
 
   cudaCheckError( cudaMalloc(&change, sizeof(bool)) );
 
-  GlobalConstants params;
-  params.k = k;
-  params.n = n;
-  params.dataset = cudaDeviceDataset;
-  params.clusters = cudaDeviceClusters;
-  params.cluster_for_point = cuda_device_cluster_for_point;
-  params.accumulators = clusterAccumulators;
-  params.change = change;
-
-  cudaCheckError( cudaMemcpyToSymbol(cuConstParams, &params, sizeof(GlobalConstants)) );
+  cuConstParams.k = k;
+  cuConstParams.n = n;
+  cuConstParams.dataset = cudaDeviceDataset;
+  cuConstParams.clusters = cudaDeviceClusters;
+  cuConstParams.cluster_for_point = cuda_device_cluster_for_point;
+  cuConstParams.accumulators = clusterAccumulators;
+  cuConstParams.change = change;
 
   cudaCheckError( cudaDeviceSynchronize() );
 
@@ -268,7 +252,7 @@ void par_computer::init_starting_clusters() {
   }
 
   // Clear the accumulators
-  kernel_update_cluster_positions<<<grid_dim_clusters, block_dim_clusters>>>();
+  kernel_update_cluster_positions<<<grid_dim_clusters, block_dim_clusters>>>(cuConstParams);
 
   cudaCheckError( cudaMemcpy(cudaDeviceClusters, clusters, sizeof(Point) * k, cudaMemcpyHostToDevice) );
 }
@@ -276,17 +260,17 @@ void par_computer::init_starting_clusters() {
 void par_computer::update_cluster_positions() {
   dim3 blockDim(256, 1);
   dim3 gridDim(n / (blockDim.x + POINT_PER_THREAD) + 1);
-  kernel_update_cluster_accumulators<<<gridDim, blockDim, k * sizeof(ClusterAccumulator)>>>();
+  kernel_update_cluster_accumulators<<<gridDim, blockDim, k * sizeof(ClusterAccumulator)>>>(cuConstParams);
   cudaCheckKernelError();
 
-  kernel_update_cluster_positions<<<grid_dim_clusters, block_dim_clusters>>>();
+  kernel_update_cluster_positions<<<grid_dim_clusters, block_dim_clusters>>>(cuConstParams);
   cudaCheckKernelError();
 }
 
 bool par_computer::update_cluster_for_point() {
   bool changeHost = false;
   cudaCheckError( cudaMemcpy(change, &changeHost, sizeof(bool), cudaMemcpyHostToDevice) );
-  kernel_update_cluster<<<grid_dim_points, block_dim_points>>>();
+  kernel_update_cluster<<<grid_dim_points, block_dim_points>>>(cuConstParams);
   cudaCheckKernelError();
 
   cudaCheckError( cudaMemcpy(&changeHost, change, sizeof(bool), cudaMemcpyDeviceToHost) );
@@ -319,7 +303,7 @@ float par_computer::compute_silhouette(bool approx) const {
   dim3 blockDim(256, 1);
   dim3 gridDim((n + blockDim.x - 1) / blockDim.x, 1);
   if (approx) {
-    kernel_silhouette_approx<<<gridDim, blockDim>>>(avg_ptr);
+    kernel_silhouette_approx<<<gridDim, blockDim>>>(cuConstParams, avg_ptr);
     cudaCheckKernelError();
   } else {
     float *glob_dist;
@@ -328,7 +312,7 @@ float par_computer::compute_silhouette(bool approx) const {
     unsigned int *glob_count;
     cudaCheckError( cudaMalloc(&glob_count, sizeof(unsigned int) * n * k) );
 
-    kernel_silhouette_all<<<gridDim, blockDim>>>(avg_ptr, glob_dist, glob_count);
+    kernel_silhouette_all<<<gridDim, blockDim>>>(cuConstParams,avg_ptr, glob_dist, glob_count);
     cudaCheckKernelError();
 
     cudaCheckError( cudaFree(glob_dist) );

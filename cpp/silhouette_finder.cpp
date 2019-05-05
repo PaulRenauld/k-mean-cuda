@@ -8,6 +8,7 @@
 #include <chrono>
 #include <iostream>
 #include <stdio.h>
+#include <omp.h>
 
 
 typedef std::chrono::high_resolution_clock Clock;
@@ -28,8 +29,15 @@ silhouette_finder::find_best_k(size_t min, size_t max, size_t step, std::ostream
 
   if (out != nullptr) *out << "k, silhouette, converge-time, silhouette-time, total-time" << std::endl;
 
-  for (size_t k = min; k < max; k += step) {
-    float sil = try_k(k, out);
+  if (use_omp) {
+    #pragma omp parallel for
+    for (size_t k = min; k < max; k += step) {
+      try_k(k, out);
+    }
+  } else {
+    for (size_t k = min; k < max; k += step) {
+      try_k(k, out);
+    }
   }
 
   time_type t1 = Clock::now();
@@ -52,18 +60,23 @@ float silhouette_finder::try_k(size_t k, std::ostream *out) {
   float sil = approx_silhouette ? computer->compute_silhouette_approximation()
                                 : computer->compute_silhouette_all();
   time_type t3 = Clock::now();
-  if (sil > best_silhouette) {
-    best_silhouette = sil;
-    delete best_cluster;
-    best_cluster = computer;
-  } else {
-    delete computer;
-  }
-  if (out != nullptr) {
-    *out << k << "," << sil << ","
-         << difftime(t1, t2) << ","
-         << difftime(t2, t3) << ","
-         << difftime(t0, t3) << std::endl;
+
+
+  #pragma omp critical
+  {
+    if (out != nullptr) {
+      *out << k << "," << sil << ","
+           << difftime(t1, t2) << ","
+           << difftime(t2, t3) << ","
+           << difftime(t0, t3) << std::endl;
+    }
+    if (sil > best_silhouette) {
+      best_silhouette = sil;
+      delete best_cluster;
+      best_cluster = computer;
+    } else {
+      delete computer;
+    }
   }
   return sil;
 }

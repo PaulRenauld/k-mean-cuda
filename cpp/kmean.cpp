@@ -40,7 +40,8 @@ int main(int argc, char *argv[]) {
           {"min",  required_argument, 0,  'm'},
           {"max",  required_argument, 0,  'M'},
           {"step", required_argument, 0,  's'},
-          {"approximation", optional_argument, 0,  'a'},
+          {"approximation", no_argument, 0,  'a'},
+          {"omp", no_argument, 0,  'p'},
           {0 ,0, 0, 0}
   };
 
@@ -48,9 +49,9 @@ int main(int argc, char *argv[]) {
   string time_file_name = "";
   int k = -1;
   int min = 2, max = 100, step = 1;
-  bool approx = false;
+  bool approx = false, omp = false;
 
-  while ((opt = getopt_long(argc, argv, "O:o:i:k:m:M:s:a?", long_options, NULL)) != EOF) {
+  while ((opt = getopt_long(argc, argv, "O:o:i:k:m:M:s:ap?", long_options, NULL)) != EOF) {
     switch (opt) {
       case 'o':
         output_file = optarg;
@@ -73,6 +74,9 @@ int main(int argc, char *argv[]) {
       case 'a':
         approx = true;
         break;
+      case 'p':
+        omp = true;
+        break;
       case 'O':
         time_file_name = optarg;
         break;
@@ -91,7 +95,7 @@ int main(int argc, char *argv[]) {
     computer.converge();
     write_output_file(computer, output_file, file_args);
   } else {
-    silhouette_finder finder(n, points, approx);
+    silhouette_finder finder(n, points, approx, omp);
     Computer *best = nullptr;
     if (time_file_name.length() != 0) {
       ofstream time_file(time_file_name);
@@ -121,6 +125,7 @@ void usage(char *string) {
   printf("  -M  --max  <max>               Specify the maximum number of cluster to try when trying to find the best k (default 100) Doesn't apply when k is specified\n");
   printf("  -s  --step  <step>             Specify the step size when trying to find the best k (default 1) Doesn't apply when k is specified\n");
   printf("  -a  --approximation            Use an optimized approximation of the silhouette when trying to find the best k. Doesn't apply when k is specified\n");
+  printf("  -p  --omp                      Compute different k in parallel when trying to find the best k. Doesn't apply when k is specified. Note that this this makes the time measurements of each k irrelevant\n");
   printf("  -O  --time-file <FILENAME>     If specified, write the time taken to find the best k in the file with other information in CSV\n");
   printf("  -?  --help                     This message\n");
 }
