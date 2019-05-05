@@ -8,11 +8,22 @@
 #include "Point.h"
 #include "data_structure.h"
 #include "kmean_computer.h"
+
 struct ClusterAccumulator {
       float x;
       float y;
       unsigned int count;
     };
+
+struct GlobalConstants {
+  size_t k;
+  size_t n;
+  Dataset dataset;
+  ClusterPosition clusters;
+  ClusterAccumulator *accumulators;
+  unsigned short *cluster_for_point;
+  bool *change;
+};
 
 class par_computer : public kmean_computer {
   public:
@@ -22,6 +33,7 @@ class par_computer : public kmean_computer {
     float compute_silhouette_all() const override;
 
   private:
+    GlobalConstants cuConstParams;
 
     Dataset cudaDeviceDataset;
     ClusterPosition cudaDeviceClusters;

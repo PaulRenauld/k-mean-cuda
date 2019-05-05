@@ -15,14 +15,14 @@ HEADERS    := Point.h data_structure.h kmean_computer.h seq_computer.h silhouett
 ARCH=$(shell uname | sed -e 's/-.*//g')
 OBJDIR=objs
 CXX=g++ -m64
-CXXFLAGS=-O3 -Wall -g -std=c++11
+CXXFLAGS=-O3 -Wall -g -std=c++11 -fopenmp
 HOSTNAME=$(shell hostname)
 
 LIBS       :=
 FRAMEWORKS :=
 
 #TODO switch to 61 and update ref
-NVCCFLAGS=-std=c++11 -O3 -m64 --gpu-architecture compute_61 -rdc=true
+NVCCFLAGS=-std=c++11 -O3 -m64 --gpu-architecture compute_61 -rdc=true -Xcompiler " -fopenmp" --default-stream per-thread
 LIBS += GL glut cudart
 
 LDFLAGS=-L/usr/local/depot/cuda-8.0/lib64/ -lcudart

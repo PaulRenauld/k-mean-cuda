@@ -11,12 +11,10 @@
 #include "kmean_computer.h"
 
 #if CUDA==1
-  #warning "Using cuda"
   #include "par_computer.h"
   #define COMPUTER_TYPE "Parallel"
   typedef par_computer Computer;
 #else
-  #warning "Using seq"
   #include "seq_computer.h"
   #define COMPUTER_TYPE "Sequential"
   typedef seq_computer Computer;
@@ -25,9 +23,11 @@
 
 class silhouette_finder {
   public:
-    silhouette_finder(size_t n, Dataset dataset, bool approx_silhouette = false)
+    silhouette_finder(size_t n, Dataset dataset, 
+                      bool approx_silhouette = false, bool use_omp = false)
             :
-            dataset(dataset), n(n), approx_silhouette(approx_silhouette),
+            dataset(dataset), n(n), 
+            approx_silhouette(approx_silhouette), use_omp(use_omp),
             best_cluster(nullptr), best_silhouette(-2) {}
 
     virtual ~silhouette_finder();
@@ -40,7 +40,7 @@ class silhouette_finder {
   private:
     const Dataset dataset;
     const size_t n;
-    const bool approx_silhouette;
+    const bool approx_silhouette, use_omp;
     Computer *best_cluster;
     float best_silhouette;
 
