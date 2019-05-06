@@ -47,7 +47,6 @@ __global__ void kernel_update_cluster(GlobalConstants cuConstParams) {
 
   Point datapoint = cuConstParams.dataset[index];
   Point f = cuConstParams.clusters[0];
-  // float minimum = datapoint.distance_squared_to(f);
   float minimum = distance_square(datapoint, f);
   unsigned short index_min = 0;
 

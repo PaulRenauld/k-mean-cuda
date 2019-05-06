@@ -8,7 +8,6 @@
 #include <chrono>
 #include <iostream>
 #include <stdio.h>
-#include <omp.h>
 
 
 typedef std::chrono::high_resolution_clock Clock;
